@@ -1,10 +1,67 @@
 ---
 # tasks file for serverspec
-- name: install ruby
-  yum: name=ruby state=installed
+- name: exist ruby
+  shell: bash -lc 'which ruby'
+  register: ruby_install
+  failed_when: ruby_install.rc not in [0,1]
+
+- name: install rbenv
+  git:
+    repo: https://github.com/sstephenson/rbenv.git
+    dest: /usr/local/rbenv
+    update: no
+
+- name: install ruby-build
+  git:
+    repo: https://github.com/sstephenson/ruby-build.git
+    dest: /usr/local/rbenv/plugins/ruby-build
+    update: no
+
+- name: add rbenv path
+  blockinfile:
+    path: /etc/profile.d/rbenv.sh
+    block: |
+      export RBENV_ROOT="/usr/local/rbenv"
+      export PATH="/usr/local/rbenv/shims:/usr/local/rbenv/bin:/usr/local/bin:$PATH"
+      eval "$(rbenv init -)"
+    create: yes
+
+- name: reflesh login shell
+  shell: bash -lc 'source /etc/profile.d/rbenv.sh'
+#  become: true
+
+- name: run install.sh
+  shell: bash -l '/usr/local/rbenv/plugins/ruby-build/install.sh'
+  become: true
+
+- name: install package-related-ruby
+  yum:
+    name:
+      - bzip2
+      - gcc
+      - openssl-devel
+      - readline-devel
+      - zlib-devel
+    state: installed
+
+- name: install ruby 2.6.3
+  shell: bash -lc "rbenv install 2.6.3 && rbenv rehash && rbenv global 2.6.3"
+  when: ruby_install.rc == 1
+
+- name: provisioning gem
+  shell: bash -lc 'rbenv shell 2.6.3'
+  when: ruby_install.rc == 1
+
+- name: install rake
+  gem:
+    name: rake
+    state: present
+    executable: /usr/local/rbenv/shims/gem
 
 - name: install serverspec
-  gem: name={{ item }} state=present user_install=no 
-  with_items:
-   - rake
-   - serverspec
+  gem:
+    name: serverspec
+    state: present
+#    install_dir: /usr/local
+    user_install: no
+    executable: /usr/local/rbenv/shims/gem

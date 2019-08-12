@@ -1,5 +1,5 @@
-[development-webservers]
+[development_webservers]
 localhost
 
 [webservers:children]
-development-webservers
+development_webservers
