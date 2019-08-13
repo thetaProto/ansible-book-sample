@@ -22,7 +22,7 @@
     path: /etc/profile.d/rbenv.sh
     block: |
       export RBENV_ROOT="/usr/local/rbenv"
-      export PATH="/usr/local/rbenv/shims:/usr/local/rbenv/bin:/usr/local/bin:$PATH"
+      export PATH="/usr/local/rbenv/bin:$PATH"
       eval "$(rbenv init -)"
     create: yes
 
